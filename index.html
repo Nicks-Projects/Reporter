@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fake Reporter</title>
+  <style>
+    body {
+      margin: 0;
+      background: #181818;
+      color: #ededed;
+      min-height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+    }
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 24px;
+      position: absolute;
+      left: 0; top: 0;
+      z-index: 5;
+    }
+    .top-bar input[type="text"]{
+      background: #222;
+      border: 1px solid #333;
+      color: #ededed;
+      border-radius: 5px;
+      font-size: 1rem;
+      padding: 7px 10px;
+      width: 220px;
+    }
+    .top-bar button {
+      background: #1e90ff;
+      color: #fff;
+      font-size: 1rem;
+      padding: 7px 22px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .top-bar button:active { background: #176cd3; }
+    .search-loading-bar {
+      width: 250px;
+      height: 6px;
+      margin-left: 2px;
+      background: #353535;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 10px;
+      position: absolute;
+      left: 24px; top: 57px;
+    }
+    .search-loading-progress {
+      background: linear-gradient(90deg, #1e90ff, #00bbff 80%);
+      height: 100%;
+      width: 0%;
+      border-radius: 3px;
+      transition: width .2s;
+    }
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 140px);
+      grid-gap: 22px;
+      justify-content: center;
+      margin-top: 140px;
+      margin-bottom: 40px;
+      opacity: 1;
+      transition: opacity .35s;
+    }
+    .button-grid button {
+      background: #222;
+      border: 1.5px solid #494949;
+      color: #ededed;
+      border-radius: 6px;
+      padding: 30px 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 14px #0005;
+      transition: background .18s, color .18s;
+      font-weight: 600;
+      min-width: 90px;
+    }
+    .button-grid button:hover { background: #1e2836; color: #42b2ff; border-color:#007ee3; }
+    .center-loader-bg {
+      position: fixed;
+      left: 0; right: 0; top: 0; bottom: 0;
+      background: rgba(12,12,16,0.73);
+      z-index: 20;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    .center-loader {
+      border: 6px solid #222;
+      border-top: 6px solid #1e90ff;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .loader-msg, .modal-msg, .platforms-msg {text-align: center;font-size:1.1rem;}
+
+    .popup, .platforms-popup, .bot-popup {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #232330;
+      color: #f5f5f5;
+      border-radius: 10px;
+      box-shadow: 0 10px 42px #0008;
+      padding: 40px 32px 28px 32px;
+      min-width: 270px;
+      z-index: 30;
+      text-align: center;
+      font-size: 1.08rem;
+    }
+    .popup button, .platforms-popup button, .bot-popup button {
+      background: #1e90ff;
+      color: #fff;
+      font-weight: 600;
+      padding: 7px 24px;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+      margin:16px 4px 0 4px;
+    }
+    .platforms-options {
+      margin: 0 0 0 0;
+      text-align:left;
+      padding-left: 18px;
+    }
+    .platforms-options label {font-size:1rem;}
+    .hidden{display:none;}
+    .flex-row {
+      display: flex; flex-direction: row; gap: 18px; justify-content: center; align-items: center;
+    }
+    .bot-form {display: flex; flex-direction: column;gap: 15px;align-items:center;}
+    .bot-progress-bar {
+      width: 180px;
+      height: 14px;
+      margin: 18px auto 6px auto;
+      background: #202c3d;
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .bot-progress-inner {
+      background: linear-gradient(90deg, #1e90ff, #44bbff 90%);
+      height: 100%;
+      width: 0%;
+      transition: width .25s;
+      border-radius: 7px;
+    }
+    .bot-progress-count {
+      font-size: 1.05rem;
+      margin-top: 5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .close-btn {
+      position: absolute;
+      right: 18px; top: 12px;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #777;
+      cursor: pointer;
+    }
+    @media (max-width: 520px){
+      .button-grid {
+        grid-template-columns: repeat(2, 138px);
+      }
+      .popup, .platforms-popup, .bot-popup {
+        min-width: 90vw; padding: 18px 2vw 20px 2vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <input id="username-input" type="text" maxlength="32" autocomplete="off" placeholder="Type a username..." />
+    <button id="search-btn">Search</button>
+  </div>
+  <div class="search-loading-bar hidden"><div class="search-loading-progress"></div></div>
+  <div id="button-grid" class="button-grid hidden"></div>
+
+  <!-- Overlays, modals, popups dynamically appear here -->
+
+  <script>
+    // Utilities
+    function randomPlatforms() {
+      const all = ["Snapchat","TikTok","Instagram","Facebook"];
+      const res = all.slice();
+      const candidates = ["Instagram", "Facebook"];
+      if (Math.random() > 0.5) {
+        // remove one at random (never both)
+        const idx = 2 + Math.floor(Math.random() * 2); // Instagram or Facebook
+        res.splice(idx, 1);
+      }
+      return res;
+    }
+    function el(sel){return document.querySelector(sel);}
+    function show(elm) { elm.classList.remove('hidden'); }
+    function hide(elm) { elm.classList.add('hidden'); }
+
+    // Elements
+    const input = el("#username-input");
+    const searchBtn = el("#search-btn");
+    const loadingBar = document.querySelector('.search-loading-bar');
+    const loadingProgress = document.querySelector('.search-loading-progress');
+    const grid = el("#button-grid");
+
+    const mainButtons = [
+      "Report",
+      "Check Account",
+      "Auto Spam Report",
+      "Block Account",
+      "Block On Every Platform",
+      "Bot Block/Report"
+    ];
+
+    // --- Search functionality
+    let currentUsername = "";
+    function startSearch() {
+      const val = (input.value
