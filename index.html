@@ -1,228 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Fake Reporter</title>
+  <meta charset="UTF-8">
+  <title>Social Reporter</title>
   <style>
-    body {
-      margin: 0;
-      background: #181818;
-      color: #ededed;
-      min-height: 100vh;
-      font-family: 'Segoe UI', sans-serif;
-      overflow-x: hidden;
+    html,body {width:100vw;min-height:100vh;margin:0;padding:0;background:#101016;color:#e0e6ef;font-family:sans-serif;}
+    .topbar {
+      position: absolute; top:24px; left:24px; z-index:100; display:flex; gap:10px; align-items:center;
     }
-    .top-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 24px;
-      position: absolute;
-      left: 0; top: 0;
-      z-index: 5;
+    .topbar input {
+      background:#1a1a22; color:white; border:1px solid #303040; border-radius:5px; padding:6px 12px; font-size:1rem; width:200px;
     }
-    .top-bar input[type="text"]{
-      background: #222;
-      border: 1px solid #333;
-      color: #ededed;
-      border-radius: 5px;
-      font-size: 1rem;
-      padding: 7px 10px;
-      width: 220px;
+    .topbar button {
+      background: #2397ff; color: #fff; border: none; border-radius: 5px; font-size: 1rem; padding: 7px 20px; cursor:pointer; transition:.18s;
     }
-    .top-bar button {
-      background: #1e90ff;
-      color: #fff;
-      font-size: 1rem;
-      padding: 7px 22px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background .2s;
+    .topbar button:hover { background: #1979c2; }
+    .searchbar-underline {
+      position:absolute; top:52px; left:24px; background:#262638; border-radius:4px; width:246px; height:6px; overflow:hidden; margin-top:4px;
+      transition: opacity .2s;
     }
-    .top-bar button:active { background: #176cd3; }
-    .search-loading-bar {
-      width: 250px;
-      height: 6px;
-      margin-left: 2px;
-      background: #353535;
-      border-radius: 3px;
-      overflow: hidden;
-      margin-top: 10px;
-      position: absolute;
-      left: 24px; top: 57px;
+    .searchbar-progress {
+      background: linear-gradient(90deg,#2397ff,#24e0ff 80%);
+      height:100%; border-radius:4px; width:0%; transition:width .15s;
     }
-    .search-loading-progress {
-      background: linear-gradient(90deg, #1e90ff, #00bbff 80%);
-      height: 100%;
-      width: 0%;
-      border-radius: 3px;
-      transition: width .2s;
-    }
+    .hidden {display:none;}
     .button-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 140px);
-      grid-gap: 22px;
-      justify-content: center;
-      margin-top: 140px;
-      margin-bottom: 40px;
-      opacity: 1;
-      transition: opacity .35s;
+      display:grid; grid-template-columns:repeat(3, 154px); gap:20px;
+      justify-content:center; margin-top:130px; transition:opacity .3s;
     }
     .button-grid button {
-      background: #222;
-      border: 1.5px solid #494949;
-      color: #ededed;
-      border-radius: 6px;
-      padding: 30px 10px;
-      font-size: 1rem;
-      cursor: pointer;
-      box-shadow: 0 4px 14px #0005;
-      transition: background .18s, color .18s;
-      font-weight: 600;
-      min-width: 90px;
+      background: #17172a; color: #e0e6ef; border:1.5px solid #2e3857; border-radius:7px; min-width:110px; padding:28px 11px; font-size:1.11rem; font-weight:600; box-shadow:0 4px 14px #0a102288; cursor:pointer; transition:all .13s;
     }
-    .button-grid button:hover { background: #1e2836; color: #42b2ff; border-color:#007ee3; }
-    .center-loader-bg {
-      position: fixed;
-      left: 0; right: 0; top: 0; bottom: 0;
-      background: rgba(12,12,16,0.73);
-      z-index: 20;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
+    .button-grid button:hover {background:#1c2747;color:#43ddf0;border-color:#2397ff;}
+    /* Overlay styles */
+    .overlay,.modal {
+      position:fixed; left:0;top:0; right:0;bottom:0; z-index:50;
+      background:rgba(9,13,19,0.77); display:flex; align-items:center; justify-content:center;
     }
-    .center-loader {
-      border: 6px solid #222;
-      border-top: 6px solid #1e90ff;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 16px;
+    .modalbox {
+      background:#202036; color:#e6e9f3; border-radius:14px; padding:34px 34px 24px 34px; box-shadow:0 14px 60px #000c; position:relative; min-width:250px; max-width:95vw; max-height:92vh; overflow-y:auto; text-align:center; font-size:1.09rem;
+      animation:popin .18s;
     }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-    .loader-msg, .modal-msg, .platforms-msg {text-align: center;font-size:1.1rem;}
-
-    .popup, .platforms-popup, .bot-popup {
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: #232330;
-      color: #f5f5f5;
-      border-radius: 10px;
-      box-shadow: 0 10px 42px #0008;
-      padding: 40px 32px 28px 32px;
-      min-width: 270px;
-      z-index: 30;
-      text-align: center;
-      font-size: 1.08rem;
+    @keyframes popin { 0% {transform:scale(.85);opacity:0} 100%{transform:scale(1);opacity:1} }
+    .modalbox .close-x {
+      position:absolute; top:10px; right:14px; background:transparent; border:none; color:#888; font-size:1.32em; cursor:pointer;
     }
-    .popup button, .platforms-popup button, .bot-popup button {
-      background: #1e90ff;
-      color: #fff;
-      font-weight: 600;
-      padding: 7px 24px;
-      border:none;
-      border-radius:5px;
-      cursor:pointer;
-      margin:16px 4px 0 4px;
+    .modalbox strong {color:#47e5ff;}
+    /* Spinner */
+    .spinner {
+      border:6px solid #252550; border-top:6px solid #20afff; border-radius:50%; width:61px; height:61px; margin:0 auto 14px auto; animation:spin 1s linear infinite;
     }
-    .platforms-options {
-      margin: 0 0 0 0;
-      text-align:left;
-      padding-left: 18px;
-    }
-    .platforms-options label {font-size:1rem;}
-    .hidden{display:none;}
-    .flex-row {
-      display: flex; flex-direction: row; gap: 18px; justify-content: center; align-items: center;
-    }
-    .bot-form {display: flex; flex-direction: column;gap: 15px;align-items:center;}
-    .bot-progress-bar {
-      width: 180px;
-      height: 14px;
-      margin: 18px auto 6px auto;
-      background: #202c3d;
-      border-radius: 7px;
-      overflow: hidden;
-    }
-    .bot-progress-inner {
-      background: linear-gradient(90deg, #1e90ff, #44bbff 90%);
-      height: 100%;
-      width: 0%;
-      transition: width .25s;
-      border-radius: 7px;
-    }
-    .bot-progress-count {
-      font-size: 1.05rem;
-      margin-top: 5px;
-      font-variant-numeric: tabular-nums;
-    }
-    .close-btn {
-      position: absolute;
-      right: 18px; top: 12px;
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      color: #777;
-      cursor: pointer;
-    }
-    @media (max-width: 520px){
-      .button-grid {
-        grid-template-columns: repeat(2, 138px);
-      }
-      .popup, .platforms-popup, .bot-popup {
-        min-width: 90vw; padding: 18px 2vw 20px 2vw;
-      }
+    @keyframes spin { 100%{ transform: rotate(360deg);} }
+    /* Progress bar for bots */
+    .progbar-box {margin:19px auto 7px auto; width:180px; height:16px; background:#19274e; border-radius:9px; overflow:hidden;}
+    .progbar {background:linear-gradient(90deg,#20afff,#54fff0 80%); height:100%; width:0%; border-radius:9px; transition:width .17s;}
+    .bot-cnt {margin:4px 0;font-variant-numeric:tabular-nums;}
+    /* Platform checklist */
+    .platform-list label {display:block; text-align:left;}
+    @media(max-width:600px){
+      .button-grid {grid-template-columns:repeat(2,1fr);}
+      .modalbox {padding:15px 5vw 15px 6vw;}
+      .topbar{left:4vw;}
+      .searchbar-underline{left:4vw;}
     }
   </style>
 </head>
 <body>
-  <div class="top-bar">
-    <input id="username-input" type="text" maxlength="32" autocomplete="off" placeholder="Type a username..." />
-    <button id="search-btn">Search</button>
+  <div class="topbar">
+    <input id="username" maxlength="32" placeholder="Type a username..." autocomplete="off">
+    <button id="searchbtn">Search</button>
   </div>
-  <div class="search-loading-bar hidden"><div class="search-loading-progress"></div></div>
-  <div id="button-grid" class="button-grid hidden"></div>
-
-  <!-- Overlays, modals, popups dynamically appear here -->
+  <div class="searchbar-underline hidden"><div class="searchbar-progress"></div></div>
+  <div id="buttons" class="button-grid hidden"></div>
 
   <script>
-    // Utilities
-    function randomPlatforms() {
-      const all = ["Snapchat","TikTok","Instagram","Facebook"];
-      const res = all.slice();
-      const candidates = ["Instagram", "Facebook"];
-      if (Math.random() > 0.5) {
-        // remove one at random (never both)
-        const idx = 2 + Math.floor(Math.random() * 2); // Instagram or Facebook
-        res.splice(idx, 1);
-      }
-      return res;
+    // --- UTILITY ---
+    function el(q){ return document.querySelector(q);}
+    function esc(str) {return (str+'').replace(/[<>]/g,c=>c=="<"?"&lt;":"&gt;");}
+    function clearOverlays() {
+      document.querySelectorAll('.overlay,.modal').forEach(e=>e.remove());
     }
-    function el(sel){return document.querySelector(sel);}
-    function show(elm) { elm.classList.remove('hidden'); }
-    function hide(elm) { elm.classList.add('hidden'); }
+    function showModal(html) {
+      clearOverlays();
+      let overlay = document.createElement('div');
+      overlay.className = 'modal';
+      overlay.innerHTML = `<div class="modalbox">${html}</div>`;
+      overlay.onclick = e=>{if(e.target===overlay) overlay.remove()};
+      let box = overlay.querySelector('.modalbox');
+      let cx = box.querySelector('.close-x');
+      if(cx) cx.onclick = ()=> overlay.remove();
+      document.body.appendChild(overlay);
+      return overlay;
+    }
+    function fakeSpinner(msg,dur,after) {
+      clearOverlays();
+      let overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.innerHTML = `<div>
+        <div class="spinner"></div>
+        <div style="margin-top:6px;font-size:1.16em;text-align:center;">${msg||''}</div>
+      </div>`;
+      document.body.appendChild(overlay);
+      setTimeout(()=>{
+        overlay.remove();
+        after && after();
+      },dur);
+    }
+    function randomPlatforms() {
+      let all=["Snapchat","TikTok","Instagram","Facebook"];
+      let copy=all.slice(), idx = Math.random()>0.5?Math.floor(2+Math.random()*2):null;
+      if(idx!==null) copy.splice(idx,1);
+      return copy;
+    }
 
-    // Elements
-    const input = el("#username-input");
-    const searchBtn = el("#search-btn");
-    const loadingBar = document.querySelector('.search-loading-bar');
-    const loadingProgress = document.querySelector('.search-loading-progress');
-    const grid = el("#button-grid");
+    // --- SEARCH ---
+    let currentUser = "";
+    let searchInput = el("#username"), searchBtn=el("#searchbtn"), grid=el("#buttons"), bar=el('.searchbar-underline'), progressBar=el('.searchbar-progress');
+    searchBtn.onclick = triggerSearch;
+    searchInput.onkeydown = e=>{if(e.key==="Enter") triggerSearch();};
+    function triggerSearch() {
+      let val = (searchInput.value||'').trim();
+      if(!val) return;
+      currentUser = val;
+      grid.classList.add('hidden');
+      bar.classList.remove("hidden"); progressBar.style.width="0%";
+      let run = 3100+Math.random()*1700, start=Date.now();
+      let ival = setInterval(()=>{
+        let p = Math.min(1,(Date.now()-start)/run); progressBar.style.width=(p*100).toFixed(1)+"%";
+        if(p>=1){ clearInterval(ival); finishSearch();}
+      },34);
+    }
+    function finishSearch() {
+      bar.classList.add("hidden");
+      renderGrid();
+      grid.classList.remove('hidden');
+    }
+    // --- GRID ---
+    let actions = ["Report","Check Account","Auto Spam Report","Block Account","Block On Every Platform","Bot Block/Report"];
+    function renderGrid() {
+      grid.innerHTML="";
+      actions.forEach(act=>{
+        let b=document.createElement('button'); b.innerText=act;
+        b.onclick=()=>handleAction(act);
+        grid.appendChild(b);
+      });
+      for(let i=actions.length;i<9;i++) grid.appendChild(document.createElement('div')); // grid balance
+    }
+    // --- ACTION HANDLERS ---
+    function handleAction(act) {
+      if(act==="Report") {
+        fakeSpinner("Reporting User...", 1900+Math.random()*1200);
+      }
+      else if(act==="Check Account") {
+        window.open('https://www.google.com/search?q='+encodeURIComponent(currentUser),'_blank');
+      }
+      else if(act==="Auto Spam Report") {
+        autoSpamModal();
+      }
+      else if(act==="Block Account") {
+        fakeSpinner("",1700+Math.random()*850,()=>{
+          showModal(`<button class="close-x" title="Close">&times;</button>
+            <div style="font-size:1.12em;margin-bottom:13px;">You have successfully blocked <strong>${esc(currentUser)}</strong>!</div>`);
+        });
+      }
+      else if(act==="Block On Every Platform") {
+        fakeSpinner("Searching Social Media...", 1400+Math.random()*1100,()=>{
+          let plats=randomPlatforms();
+          showModal(`<button class="close-x" title="Close">&times;</button>
+            <div style="font-size:1.19em;margin-bottom:14px;">Where would you like to block <strong>${esc(currentUser)}</strong>?</div>
+            <div class="platform-list" style="margin:12px 0 12px 0;">
+              ${plats.map(p=>`<label><input type="checkbox" checked disabled> ${p}</label>`).join("")}
+            </div>
+            <button style="margin-top:12px;" onclick="this.closest('.modal').remove()">Done</button>
+          `);
+        });
+      }
+      else if(act==="Bot Block/Report") {
+        botModal();
+      }
+    }
 
-    const mainButtons = [
-      "Report",
-      "Check Account",
-      "Auto Spam Report",
-      "Block Account",
-      "Block On Every Platform",
-      "Bot Block/Report"
-    ];
+    // --- MODAL: SPAM REPORT ---
+    function autoSpamModal() {
+      clearOverlays();
+      let cnt=0,max=100,run=true;
+      let overlay=showModal(`<button class="close-x" title="Close">&times;</button>
+        <div style="font-size:1.1em; margin-bottom:8px;">Spam Reporting <strong>${esc(currentUser)}</strong></div>
+        <div style="color:#71eaff;margin-bottom:9px;">Spam Reporting On Your Account</div>
+        <div style="font-size:1.18em;margin-bottom:7px;"><span id="spamcount">0</span> / 100</div>
+        <button id="spamstop" style="margin:6px 5px 0 5px;">Stop</button>
+        <button id="spamresume" disabled style="margin:6px 5px 0 5px;color:#aee6fc;">Resume</button>
+        <button id="spamclose" style="margin:6px 5px 0 5px;">Close</button>
+      `);
+      let scnt=overlay.querySelector("#spamcount"), stop=overlay.querySelector("#spamstop"), resume=overlay.querySelector("#spamresume"), close=overlay.querySelector("#spamclose");
+      let timer=null;
+      function tick() {
+        if(cnt<max && run) {
+          cnt++; scnt.textContent=cnt;
+          if(cnt>=max){run=false;stop.disabled=true;}
+          else timer=setTimeout(tick,23+Math.random()*13);
+        }
+      }
+      stop.onclick=()=>{ run=false; stop.disabled=true; resume.disabled=false;/*pause*/};
+      resume.onclick=()=>{ if(cnt<max){ run=true; stop.disabled=false; resume.disabled=true; tick();}};
+      close.onclick=()=>{run=false; overlay.remove(); };
+      tick();
+    }
 
-    // --- Search functionality
-    let currentUsername = "";
-    function startSearch() {
-      const val = (input.value
+    // --- MODAL: BOT BLOCK/REPORT ---
+    function botModal() {
+      clearOverlays();
+      let overlay=showModal(`<button class="close-x" title="Close">&times;</button>
+        <form style="margin:0 auto;max-width:330px;" onsubmit="return false">
+          <div style="margin-bottom:10px;">
+            <label>How Many Bots (Max: 100): <input type="number" id="botnum" min=1 max=100 style="width:50px;margin-left:7px;"></label>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label><input type="radio" name="botmode" value="Block"> Block </label>
+            <label style="margin-left:16px;"><input type="radio" name="botmode" value="Report"> Report </label>
+          </div>
+          <button id="botgo" disabled>Continue</button>
+        </form>
+      `);
+      let go=overlay.querySelector("#botgo"), num=overlay.querySelector("#botnum"),
+        radios=overlay.querySelectorAll("input[name=botmode]");
+      let hasN=()=>num.value>=1&&num.value<=100, hasM=()=>[...radios].some(r=>r.checked);
+      function check(){ go.disabled= !(hasN() && hasM());}
+      num.oninput=check;
+      radios.forEach(r=>r.onchange=check);
+      go.onclick=()=>{
+        let n=+num.value, mode=[...radios].find(r=>r.checked).value;
+        botProgressModal(n,mode);
+        overlay.remove();
+      };
+    }
+    function botProgressModal(n,mode){
+      let overlay=showModal(
+        `<div style="margin-bottom:10px;">${mode}ing <strong>${n}</strong> bots...</div>
+        <div class="progbar-box"><div class="progbar"></div></div>
+        <div class="bot-cnt" id="botcnt">0/${n}</div>`
+      ), prog=overlay.querySelector(".progbar"), cnt=overlay.querySelector("#botcnt");
+      let c=0, interval=setInterval(()=>{
+        c++; prog.style.width=(c/n*100).toFixed(1)+"%"; cnt.textContent=`${c}/${n}`;
+        if(c>=n) { clearInterval(interval); setTimeout(()=>{ overlay.querySelector('.modalbox').innerHTML='Complete!'; setTimeout(()=>overlay.remove(),850); },560);}
+      },21+Math.random()*12);
+    }
+  </script>
+</body>
+</html>
